@@ -2,20 +2,18 @@
 
 #include "TLink.h"
 #include "TStack.h"
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <conio.h>
 using namespace std;
-/*-------------------------------------------------------------------------*/
 class TText
 {
-private:
-
-	TLink*         pFirst;
-	TLink*         pCurr;
-	TStack<TLink*> path;
-
 public:
+
+	TLink*pFirst;
+	TLink*pCurr;
+	TStack<TLink*> path;
 
 	TText(TLink* _pFirst = NULL);
 	~TText(){};
@@ -37,18 +35,27 @@ public:
 	void GoNext();
 	bool IsEnd();
 
+	string GetLine();
+	void SetLine(string str);
 
-	TLink* ReadSection(ifstream &ifs);
+	TLink* ReadSection(ifstream& ifs);
 	void   ReadFile(char* fname);
 	void   PrintSection(TLink* p);
 	void   PrintSection(TLink* p, ofstream &ofs);
 	void   PrintText();
 	void   SaveText(char* fname);
+	void   SaveSection(TLink* p, ofstream & ofs);
 };
-/*-------------------------------------------------------------------------*/
 
-/*-------------------------------------------------------------------------*/
-TText::TText(TLink* _pFirst = NULL) : path(100)
+
+
+
+
+
+
+
+
+TText::TText(TLink* _pFirst) : path(100)
 {
 	if (_pFirst == NULL)
 	{
@@ -61,7 +68,7 @@ TText::TText(TLink* _pFirst = NULL) : path(100)
 		pCurr = pFirst;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::GoNextLink()
 {
 	if (pCurr != NULL)
@@ -73,7 +80,7 @@ void TText::GoNextLink()
 		}
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::GoDownLink()
 {
 	if (pCurr != NULL)
@@ -85,21 +92,21 @@ void TText::GoDownLink()
 		}
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::GoPrevLink()
 {
 	if (!path.IsEmpty())
 	{
-		pCurr = path.Pop;
+		pCurr = path.Pop();
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::GoFirstLink()
 {
 	pCurr = pFirst;
 	path.Clear();
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::InsNextLine(char* _str)
 {
 	if (pCurr != NULL)
@@ -109,7 +116,7 @@ void TText::InsNextLine(char* _str)
 		pCurr->pNext = tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::InsNextSection(char* _str)
 {
 	if (pCurr != NULL)
@@ -119,7 +126,7 @@ void TText::InsNextSection(char* _str)
 		pCurr->pNext = tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::InsDownLine(char* _str)
 {
 	if (pCurr != NULL)
@@ -129,7 +136,7 @@ void TText::InsDownLine(char* _str)
 		pCurr->pDown = tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::InsDownSection(char* _str)
 {
 	if (pCurr != NULL)
@@ -139,7 +146,7 @@ void TText::InsDownSection(char* _str)
 		pCurr->pDown = tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::DelNextLine()
 {
 	if (pCurr != NULL)
@@ -149,7 +156,7 @@ void TText::DelNextLine()
 		delete tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::DelDownLine()
 {
 	if (pCurr != NULL)
@@ -159,7 +166,7 @@ void TText::DelDownLine()
 		delete tmp;
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::Reset()
 {
 	pCurr = pFirst;
@@ -170,7 +177,7 @@ void TText::Reset()
 	if (pCurr->pDown != NULL)
 		path.Push(pCurr->pDown);
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::GoNext()
 {
 	if (!path.IsEmpty())
@@ -182,19 +189,17 @@ void TText::GoNext()
 			path.Push(pCurr->pDown);
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 bool TText::IsEnd()
 {
 	return (path.IsEmpty());
 }
-/*-------------------------------------------------------------------------*/
+
 TLink* TText::ReadSection(ifstream& ifs)
 {
 	TLink* pHead = new TLink();
 	TLink* pTmp = pHead;
 	string str;
-	char tmp[100];
-	int strLength = 0;
 	while (!ifs.eof())
 	{
 		getline(ifs, str);
@@ -206,10 +211,8 @@ TLink* TText::ReadSection(ifstream& ifs)
 				pTmp->pDown = ReadSection(ifs);
 			else
 			{
-			//	strLength = str.length();
-				strcpy(tmp, str.c_str());
-
-				TLink* q = new TLink(tmp);
+				//char   str1[100] = str.c_str();
+				TLink* q = new TLink(str.c_str());
 				pTmp->pNext = q;
 				pTmp = q;
 			}
@@ -225,14 +228,11 @@ TLink* TText::ReadSection(ifstream& ifs)
 	return pHead;
 }
 
-/*-------------------------------------------------------------------------*/
-
 void TText::ReadFile(char* fname)
 {
 	ifstream ifs(fname);
 	pFirst = ReadSection(ifs);
 }
-/*-------------------------------------------------------------------------*/
 
 void TText::PrintSection(TLink* p)
 {
@@ -243,9 +243,9 @@ void TText::PrintSection(TLink* p)
 		PrintSection(p->pNext);
 	}
 }
-/*-------------------------------------------------------------------------*/
 
-void TText::PrintSection(TLink* p,ofstream &ofs)
+
+void TText::PrintSection(TLink* p, ofstream &ofs)
 {
 	if (p != NULL)
 	{
@@ -254,15 +254,42 @@ void TText::PrintSection(TLink* p,ofstream &ofs)
 		PrintSection(p->pNext);
 	}
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::PrintText()
 {
 	PrintSection(pFirst);
 }
-/*-------------------------------------------------------------------------*/
+
 void TText::SaveText(char* fname)
 {
 	ofstream ofs(fname);
-	PrintSection(pFirst, ofs);
+	SaveSection(pFirst, ofs);
 }
-/*-------------------------------------------------------------------------*/
+void TText::SaveSection(TLink* p, ofstream & ofs)
+{
+	if (p != NULL)
+	{
+		ofs << p->str << endl;
+		//Ñêîáêè
+		if (p->pDown != NULL)
+		{
+			ofs << "}" << endl;
+			PrintSection(p->pDown);
+		}
+		if (p->pNext == NULL)
+			ofs << "{" << endl;
+		else
+			PrintSection(p->pNext);
+	}
+}
+
+
+string TText::GetLine()
+{
+	return this->pCurr->str;
+}
+
+void TText::SetLine(string str)
+{
+	*this->pCurr->str = *str.c_str();
+}
