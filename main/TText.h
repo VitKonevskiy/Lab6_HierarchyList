@@ -6,13 +6,68 @@
 #include <fstream>
 #include <iostream>
 #include <conio.h>
-using namespace std;
+
+
+enum ConsoleColor {
+	Black = 0,
+	Blue = 1,
+	Green = 2,
+	Cyan = 3,
+	Red = 4,
+	Magenta = 5,
+	Brown = 6,
+	LightGray = 7,
+	DarkGray = 8,
+	LightBlue = 9,
+	LightGreen = 10,
+	LightCyan = 11,
+	LightRed = 12,
+	LightMagenta = 13,
+	Yellow = 14,
+	White = 15
+};
+void Draw(char str[150])
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	//÷вет символов - желтый. ÷вет фона - темно-серый*/
+	//SetConsoleTextAttribute(hConsole, (WORD)((DarkGray << 4) | Yellow));
+	SetConsoleTextAttribute(hConsole, (WORD)((Black << 4) | LightBlue));
+	printf(str);
+	SetConsoleTextAttribute(hConsole, (WORD)((Black << 4) | White));
+}
+
+void Draw(string str)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	//÷вет символов - желтый. ÷вет фона - темно-серый*/
+	//SetConsoleTextAttribute(hConsole, (WORD)((DarkGray << 4) | Yellow));
+	SetConsoleTextAttribute(hConsole, (WORD)((Black << 4) | LightBlue));
+	printf("%s",str);
+	SetConsoleTextAttribute(hConsole, (WORD)((Black << 4) | White));
+}
+
+
+string voids(int _level)
+{
+	int i = _level;
+	string str;
+	//str[0] = '\0';
+	while (i != 0)
+	{
+		str = str +"    ";
+		i--;
+	}
+	return str;
+}
+
+
+
 class TText
 {
 public:
 
-	TLink*pFirst;
-	TLink*pCurr;
+	TLink*         pFirst;
+	TLink*         pCurr;
 	TStack<TLink*> path;
 
 	TText(TLink* _pFirst = NULL);
@@ -40,18 +95,15 @@ public:
 
 	TLink* ReadSection(ifstream& ifs);
 	void   ReadFile(char* fname);
-	void   PrintSection(TLink* p);
-	void   PrintSection(TLink* p, ofstream &ofs);
+	void   PrintSection(TLink* p, int level);
 	void   PrintText();
 	void   SaveText(char* fname);
-	void   SaveSection(TLink* p, ofstream & ofs);
+	void   SaveSection(TLink* p, ofstream& ofs);
 };
 
 
 
-
-
-
+using namespace std;
 
 
 
@@ -197,6 +249,8 @@ bool TText::IsEnd()
 
 TLink* TText::ReadSection(ifstream& ifs)
 {
+	int key = 0;
+	int NumberPosition = 8;
 	TLink* pHead = new TLink();
 	TLink* pTmp = pHead;
 	string str;
@@ -213,8 +267,10 @@ TLink* TText::ReadSection(ifstream& ifs)
 			{
 				//char   str1[100] = str.c_str();
 				TLink* q = new TLink(str.c_str());
+				q->line = key;							//Update
 				pTmp->pNext = q;
 				pTmp = q;
+												//Update
 			}
 		}
 	}
@@ -230,59 +286,75 @@ TLink* TText::ReadSection(ifstream& ifs)
 
 void TText::ReadFile(char* fname)
 {
-	ifstream ifs(fname);
+	ifstream ifs;// (fname);
+	ifs.open(fname);
 	pFirst = ReadSection(ifs);
+	ifs.close();
+	pCurr = pFirst;
 }
 
-void TText::PrintSection(TLink* p)
+/*
+void TText::PrintSection(TLink* p, int level)
 {
 	if (p != NULL)
 	{
-		cout << p->str << endl;
-		PrintSection(p->pDown);
-		PrintSection(p->pNext);
+		cout << voids(level) << p->str << endl;
+		if (p->pDown != NULL)
+		{
+			p->level = ++level;
+			PrintSection(p->pDown, level);
+			p->level = --level;
+		}
+		PrintSection(p->pNext, level);
 	}
 }
-
-
-void TText::PrintSection(TLink* p, ofstream &ofs)
+*/
+void TText::PrintSection(TLink* p, int level)
 {
 	if (p != NULL)
 	{
-		ofs << p->str << endl;
-		PrintSection(p->pDown);
-		PrintSection(p->pNext);
+		if (p == pCurr)
+			cout << "-> "<< voids(level) << p->str << endl;
+		else 
+			cout << "   " << voids(level) << p->str << endl;
+		if (p->pDown != NULL)
+		{
+			p->level = ++level;
+			PrintSection(p->pDown, level);			
+			p->level = --level;
+		}
+		PrintSection(p->pNext, level);			
 	}
 }
 
 void TText::PrintText()
 {
-	PrintSection(pFirst);
+	PrintSection(pFirst, pFirst->level);//0			
 }
 
 void TText::SaveText(char* fname)
 {
-	ofstream ofs(fname);
+	ofstream ofs;
+	ofs.open(fname);
 	SaveSection(pFirst, ofs);
+	ofs.close();
 }
-void TText::SaveSection(TLink* p, ofstream & ofs)
+
+void TText::SaveSection(TLink* p, ofstream& ofs)
 {
 	if (p != NULL)
 	{
 		ofs << p->str << endl;
-		//—кобки
 		if (p->pDown != NULL)
 		{
-			ofs << "}" << endl;
-			PrintSection(p->pDown);
-		}
-		if (p->pNext == NULL)
 			ofs << "{" << endl;
-		else
-			PrintSection(p->pNext);
+			SaveSection(p->pDown, ofs);
+			ofs << "}" << endl;
+
+		}
+		SaveSection(p->pNext, ofs);
 	}
 }
-
 
 string TText::GetLine()
 {

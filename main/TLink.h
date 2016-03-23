@@ -2,21 +2,23 @@
 
 #include <string>
 #include <iostream>
+#include "TText.h"
 
 const int MaxLen = 81;
 
 using namespace std;
+
 const int MaxArrSize = 100;
 
-class TLink;
 class TText;
+class TLink;
 
-	struct TTextMem
-	{
-		TLink* pFirst;
-		TLink* pFree;
-		TLink* pLast;
-	};
+struct TTextMem
+{
+	TLink* pFirst;
+	TLink* pFree;
+	TLink* pLast;
+};
 
 
 class TLink
@@ -26,6 +28,9 @@ public:
 	char   str[MaxLen]; // Строка в списке ( заголовок)
 	TLink* pNext; // Указатель на тот же уровень
 	TLink* pDown; // Указатель на подуровень
+	int    level; // Уровень текста
+	int		line;
+
 
 	TLink();
 	TLink(const char* _str, TLink* _pNext = NULL, TLink* _pDown = NULL);
@@ -35,7 +40,7 @@ public:
 	void*    operator new(size_t size);
 	void     operator delete (void* p);
 	static void     InitMem(int size);
-	static void     ClearMem(TText& txt);
+	//	static void     ClearMem(TText& txt);
 	void     PrintFreeLinks();
 
 };
@@ -44,6 +49,8 @@ TLink::TLink()
 {
 	pNext = NULL;
 	pDown = NULL;
+	level = 0;
+	line = 0;
 	str[0] = '\0';
 }
 
@@ -51,26 +58,29 @@ TLink::TLink(const char* _str, TLink* _pNext, TLink* _pDown)
 {
 	pNext = _pNext;
 	pDown = _pDown;
+	level = 0;
 	strcpy_s(str, _str);
 }
 
 void* TLink:: operator new(size_t size)
 {
 	TLink* tmp = TextMem.pFree;
-	TextMem.pFree = TextMem.pFree->pNext;
+	if (TextMem.pFree!=NULL)
+		TextMem.pFree = TextMem.pFree->pNext;
 	return tmp;
 }
 
 void TLink:: operator delete (void* p)
 {
 	TLink* tmp = (TLink*)p;
-	tmp->TextMem.pFree = TextMem.pFree;                                   // ???????????
+	//tmp->TextMem.pFree = TextMem.pFree;
+	tmp->pNext = TextMem.pFree;
 	TextMem.pFree = tmp;
 }
 
 void TLink::InitMem(int size)
 {
-	TextMem.pFirst = (TLink*) new char[sizeof (TLink)* size];
+	TextMem.pFirst = (TLink*) new char[sizeof (TLink)*size];
 	TextMem.pFree = TextMem.pFirst;
 	TextMem.pLast = TextMem.pFirst + (size - 1);
 	TLink* tmp = TextMem.pFirst;
@@ -81,35 +91,34 @@ void TLink::InitMem(int size)
 	}
 	tmp->pNext = NULL;
 }
-
+/*
 void TLink::ClearMem(TText& txt)
 {
-
-	for (txt.Reset(); !txt.IsEnd(); txt.GoNext())
-	{
-		string s = "+";
-		s += txt.GetLine();
-		txt.SetLine(s);
-	}
-	TLink* pTmp = TextMem.pFree;
-	while (pTmp != NULL)
-	{
-		pTmp->str[0] = '+';
-		pTmp->str[1] = '\0';
-	}
-	pTmp = TextMem.pFirst;
-	for (int i = 0; i < MaxArrSize; i++)
-	{
-		if (pTmp->str[0] == '+')
-			pTmp->str[0] = ' ';
-		else
-		{
-			delete pTmp;
-			pTmp++;
-		}
-	}
+for (txt.Reset(); !txt.IsEnd(); txt.GoNext())
+{
+string s = "+";
+s += txt.GetLine();
+txt.SetLine(s);
 }
-
+TLink* pTmp = TextMem.pFree;
+while (pTmp != NULL)
+{
+pTmp->str[0] = '+';
+pTmp->str[1] = '\0';
+}
+pTmp = TextMem.pFirst;
+for (int i = 0; i < MaxArrSize; i++)
+{
+if (pTmp->str[0] == '+')
+pTmp->str[0] = ' ';
+else
+{
+delete pTmp;
+pTmp++;
+}
+}
+}
+*/
 void TLink::PrintFreeLinks()
 {
 	string FreeLinks = NULL;
